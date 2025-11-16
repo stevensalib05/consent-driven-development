@@ -27,7 +27,29 @@
   .card{background:var(--card);border:1px solid #14202b;border-radius:16px;
         box-shadow:0 10px 30px rgba(0,0,0,.25);overflow:hidden}
   .pane{padding:14px}
-  video,canvas{width:100%;height:auto;display:block;background:#000;border-bottom:1px solid #233142}
+
+  /* ===== Camera: video with overlay canvas ===== */
+  .camWrap{
+    position:relative;
+    width:100%;
+    border-bottom:1px solid #233142;
+    background:#000;
+  }
+  .camWrap video{
+    width:100%;
+    height:auto;
+    display:block;
+  }
+  .camWrap canvas{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    display:block;
+    background:transparent;
+    pointer-events:none;
+  }
+
   .legend{display:flex;gap:10px;flex-wrap:wrap;padding:8px 12px;border-top:1px dashed #233242}
   .chip{display:inline-flex;gap:8px;align-items:center;padding:4px 8px;border-radius:999px;border:1px solid #253645;background:#17222d;font-size:12px}
   .dot{width:10px;height:10px;border-radius:50%}
@@ -119,8 +141,10 @@
 <main class="grid">
   <!-- LEFT: camera + overlay -->
   <section class="card">
-    <video id="video" playsinline muted></video>
-    <canvas id="overlay"></canvas>
+    <div class="camWrap">
+      <video id="video" playsinline muted></video>
+      <canvas id="overlay"></canvas>
+    </div>
     <div class="legend">
       <span class="chip"><span class="dot green"></span> empty chair</span>
       <span class="chip"><span class="dot red"></span> occupied chair</span>
