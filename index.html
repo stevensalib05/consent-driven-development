@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Weldon Seat Sonar — Hostile UX Edition</title>
+<title>Weldon Seat Sonar — Hostile UX + Tall Reels</title>
 <style>
   :root{
-    --bg:#0b1117; --card:#101821; --muted:#2a3a47; --text:#cfe6ff;
+    --bg:#0b1117; --card:#0f1822; --muted:#2a3a47; --text:#cfe6ff;
     --green:#57dba1; --red:#ff6b6b; --yellow:#ffd166; --blue:#60a5fa;
   }
   *{box-sizing:border-box}
@@ -20,9 +20,12 @@
   .marq{white-space:nowrap;overflow:hidden;border-top:1px dashed #1a2a3a}
   .marq span{display:inline-block;padding:6px 0;animation:marq 16s linear infinite;color:#8fb8ff}
   @keyframes marq{0%{transform:translateX(100%)}100%{transform:translateX(-100%)}}
-  main{max-width:1200px;margin:16px auto 90px;padding:0 14px}
-  .grid{display:grid;grid-template-columns:1.1fr .9fr;gap:16px}
-  .card{background:var(--card);border:1px solid #14202b;border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.25);overflow:hidden}
+  main{max-width:1400px;margin:16px auto 90px;padding:0 14px}
+  .grid{display:grid;grid-template-columns:1fr 520px;gap:18px}
+  @media (max-width:1100px){ .grid{grid-template-columns:1fr} }
+
+  .card{background:var(--card);border:1px solid #14202b;border-radius:16px;
+        box-shadow:0 10px 30px rgba(0,0,0,.25);overflow:hidden}
   .pane{padding:14px}
   video,canvas{width:100%;height:auto;display:block;background:#000;border-bottom:1px solid #233142}
   .legend{display:flex;gap:10px;flex-wrap:wrap;padding:8px 12px;border-top:1px dashed #233242}
@@ -32,39 +35,74 @@
   .controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:10px;border-top:1px solid #172532;background:#0e1620;position:relative}
   .pill{display:inline-flex;gap:8px;align-items:center;background:#18232e;border:1px solid #253645;border-radius:999px;padding:6px 10px}
   label.small{font-size:12px;opacity:.85}
-  button,select,input[type="file"]::file-selector-button{
-    background:#1a2630;color:var(--text);border:1px solid var(--muted);
-    border-radius:10px;padding:8px 12px;cursor:pointer
-  }
-  button:hover{background:#223140}
-  button.primary{background:#254055;border-color:#2f536d}
+  button,select{background:#1a2630;color:var(--text);border:1px solid #2a3a47;border-radius:10px;padding:8px 12px;cursor:pointer}
+  button:hover{background:#223140} button.primary{background:#254055;border-color:#2f536d}
   input[type="range"]{accent-color:#6fc5ff}
-  /* Hostile UX: reversed slider visuals */
   .reverse{transform:scaleX(-1)} .reverse + span{user-select:none}
-  /* Floating tips that get in the way */
-  .floaty{position:absolute;right:10px;top:-12px;background:#15202b;border:1px solid #243545;
-    padding:6px 10px;border-radius:8px;font-size:12px;animation:float 6s ease-in-out infinite}
+  .floaty{position:absolute;right:10px;top:-12px;background:#15202b;border:1px solid #243545;padding:6px 10px;border-radius:8px;font-size:12px;animation:float 6s ease-in-out infinite}
   @keyframes float{0%{transform:translateY(0)}50%{transform:translateY(10px)}100%{transform:translateY(0)}}
-  /* Annoy mode jiggle */
-  .jiggle:hover{transform:translate(2px,-2px) rotate(-1deg)}
-  .shaky{animation:shaky .25s infinite}
-  @keyframes shaky{0%{transform:translate(0,0)}25%{transform:translate(1px,-1px)}50%{transform:translate(-1px,1px)}75%{transform:translate(1px,1px)}100%{transform:translate(0,0)}}
-  /* Toasts */
   #toasts{position:fixed;right:12px;bottom:12px;display:flex;flex-direction:column;gap:8px;z-index:5}
   .toast{background:#0e1622;border:1px solid #213244;border-radius:12px;padding:10px 12px;min-width:220px;box-shadow:0 6px 16px rgba(0,0,0,.35)}
   .ok{color:var(--green)} .warn{color:var(--yellow)} .err{color:var(--red)} .muted{opacity:.65}
   footer{position:fixed;bottom:0;left:0;right:0;padding:10px 14px;background:#0a0f14e0;backdrop-filter:blur(8px);
     border-top:1px solid #12202c;display:flex;gap:12px;justify-content:center}
   .kbd{background:#111a22;border:1px solid #2a3a47;border-radius:6px;padding:0 6px;font-size:12px}
-  /* Mystery progress that means nothing */
-  .mystery{height:6px;background:#12202c}
-  .mystery>i{display:block;height:100%;width:12%;background:linear-gradient(90deg,#1e88e5,#7c4dff);animation:bar 2.6s linear infinite}
-  @keyframes bar{0%{margin-left:-12%}100%{margin-left:100%}}
-  /* Modal */
-  .modalBack{position:fixed;inset:0;background:#0008;display:none;align-items:center;justify-content:center;z-index:6}
-  .modal{background:#0f1620;border:1px solid #244;color:var(--text);padding:16px;border-radius:12px;max-width:420px}
-  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+
+  /* ===== Reels: tall, one-per-screen, snap scroll ===== */
+  #reelsCard{position:sticky;top:74px;height:calc(100vh - 100px)}
+  #reelsPanel{
+    height:100%; overflow-y:auto; overflow-x:hidden; scroll-snap-type:y mandatory;
+    display:flex; flex-direction:column; gap:0; scrollbar-width:thin; scrollbar-color:#2a3a47 transparent;
+  }
+  #reelsPanel::-webkit-scrollbar{width:6px}
+  #reelsPanel::-webkit-scrollbar-track{background:transparent}
+  #reelsPanel::-webkit-scrollbar-thumb{background:#2a3a47;border-radius:3px}
+  .reel{
+    position:relative; width:100%; min-height:100%; flex-shrink:0;
+    border-radius:0; overflow:hidden; scroll-snap-align:start; scroll-snap-stop:always;
+    background:#000; transition:opacity .2s;
+  }
+  .reel video{
+    width:100%; height:100%; object-fit:cover; display:block;
+    filter:contrast(1.06) saturate(1.15);
+  }
+  .reel.loading{opacity:.3}
+  .progress{
+    position:absolute; top:0; left:0; right:0; height:3px; background:#0003; z-index:2;
+  }
+  .progress-bar{
+    height:100%; background:linear-gradient(90deg, #60a5fa, #57dba1); width:0%; transition:width .1s linear;
+  }
+  .cap{
+    position:absolute; left:14px; bottom:80px; right:70px; color:#fff; font-size:13px; z-index:1;
+    text-shadow:0 2px 8px rgba(0,0,0,.8);
+  }
+  .cap-title{font-weight:600; margin-bottom:4px; font-size:14px}
+  .cap-author{opacity:.85; font-size:12px}
+  .sideBtns{
+    position:absolute; right:14px; bottom:20px; display:flex; flex-direction:column; gap:12px; z-index:1;
+  }
+  .iconBtn{
+    width:48px; height:48px; border-radius:50%; border:none;
+    background:#17232ecc; backdrop-filter:blur(8px); color:#fff; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; font-size:20px; cursor:pointer; transition:all .2s;
+    box-shadow:0 4px 12px rgba(0,0,0,.3);
+  }
+  .iconBtn:hover{background:#1f3647; transform:scale(1.08)}
+  .iconBtn small{font-size:10px; margin-top:2px; font-weight:600}
+  .tag{
+    position:absolute; top:14px; left:14px; background:#17232ecc; backdrop-filter:blur(8px);
+    color:#fff; border-radius:999px; padding:7px 12px; font-size:11px; font-weight:600;
+    text-transform:uppercase; letter-spacing:.5px; z-index:1;
+  }
+  .loader{
+    position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+    width:40px; height:40px; border:3px solid #2a3a47; border-top-color:#60a5fa;
+    border-radius:50%; animation:spin 1s linear infinite; z-index:2;
+  }
+  @keyframes spin{to{transform:translate(-50%,-50%) rotate(360deg)}}
 </style>
+
 <!-- TensorFlow.js + COCO-SSD -->
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.16.0/dist/tf.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3"></script>
@@ -75,11 +113,11 @@
     <h1>Weldon Seat Sonar <span class="badge">Hostile UX Edition™</span></h1>
     <div class="row muted">Pings when it sees <b>occupied chairs</b>. Probably.</div>
   </div>
-  <div class="mystery"><i></i></div>
-  <div class="marq"><span>Tip: For best results, point at a chair. Not your shoes. • Your camera never leaves your device (unless you yeet your device). • If anything breaks, it’s a feature.</span></div>
+  <div class="marq"><span>Tip: point at a chair • Camera stays on-device • If anything breaks, it's a feature • J/K or ↑/↓ to change reels, M to mute, L to like</span></div>
 </header>
 
 <main class="grid">
+  <!-- LEFT: camera + overlay -->
   <section class="card">
     <video id="video" playsinline muted></video>
     <canvas id="overlay"></canvas>
@@ -94,8 +132,8 @@
       <div class="floaty">Start requires <b>two</b> clicks. For safety.</div>
       <input type="checkbox" id="consent">
       <label for="consent" class="small">I solemnly swear this camera points at chairs*</label>
-      <button id="start" class="primary jiggle">Do Not Press</button>
-      <button id="stop" class="jiggle">Abort Mission</button>
+      <button id="start" class="primary">Do Not Press</button>
+      <button id="stop">Abort Mission</button>
       <select id="cameras" title="mystery camera"></select>
 
       <div class="pill">
@@ -111,14 +149,10 @@
       <div class="pill">
         <label class="small">Sound</label>
         <input type="file" id="sound" accept="audio/*" />
-        <span class="muted small">defaults to sonar</span>
+        <span class="muted small">defaults to sonar.mp3</span>
       </div>
-      <button id="mute">Mute (?)</button>
+      <button id="mute">Mute</button>
       <button id="snapshot">Take Evidence</button>
-      <div class="pill">
-        <label class="small">Annoy Mode</label>
-        <input type="checkbox" id="annoy">
-      </div>
       <div class="pill">
         <label class="small">Night Vision</label>
         <input type="checkbox" id="invert">
@@ -126,45 +160,31 @@
     </div>
   </section>
 
-  <aside class="card pane">
-    <h3 style="margin-top:6px">Decision “logic” (trust us bro)</h3>
-    <ol class="muted">
-      <li>Detect <b>chair</b> + <b>person</b> in-browser.</li>
-      <li>Chair is <b>occupied</b> if IoU ≥ 0.25 with a person, or a person’s center falls inside the chair box.</li>
-      <li>Otherwise it’s <b>empty</b>. We ping when there’s at least one <b>occupied</b> chair (respecting cooldown).</li>
-    </ol>
-    <hr style="border-color:#1a2a36;margin:14px 0">
-    <div class="row"><b>Status:</b>&nbsp;<span id="status" class="warn">Model loading…</span></div>
-    <div class="row"><b>Empty chairs:</b>&nbsp;<span id="emptyCount">0</span></div>
-    <div class="row"><b>Occupied chairs:</b>&nbsp;<span id="occCount">0</span></div>
-    <div class="row"><b>Persons:</b>&nbsp;<span id="personCount">0</span></div>
-    <p class="muted" style="margin-top:10px">
-      * By checking the box you agree to the Weldon Seat Sonar End-User License of Vibes (EULV).
-    </p>
-  </aside>
+  <!-- RIGHT: tall reels -->
+  <section class="card pane" id="reelsCard">
+    <h3 style="margin:6px 2px 10px">Study Reels <span style="opacity:.6;font-size:12px">(swipe/scroll • J/K keys)</span></h3>
+    <div id="reelsPanel">
+      <div class="reel loading"><div class="loader"></div></div>
+    </div>
+  </section>
 </main>
 
 <footer class="muted">
-  Keys: <span class="kbd">S</span> start/stop • <span class="kbd">Q</span> mute/unmute • <span class="kbd">Space</span> ping • <span class="kbd">F</span> fullscreen
+  Keys: <span class="kbd">S</span> start/stop • <span class="kbd">Q</span> mute/unmute • <span class="kbd">Space</span> ping • <span class="kbd">F</span> fullscreen • <span class="kbd">J/K</span> next/prev reel
 </footer>
 
 <div id="toasts"></div>
 
-<!-- modal that appears at wildly unhelpful times -->
-<div id="modalBack" class="modalBack">
-  <div class="modal">
-    <h3>Are you sure you meant to click that?</h3>
-    <p class="muted">Double-confirm to continue. Triple-confirm to cancel the confirm.</p>
-    <div class="row" style="justify-content:flex-end">
-      <button id="mCancel">Triple-Confirm (Cancel)</button>
-      <button id="mOk" class="primary">Double-Confirm</button>
-    </div>
-  </div>
-</div>
-
 <script>
 (() => {
-  // ==== Elements & state ====
+  /* =========================
+     HARD-CODED PEXELS API KEY
+  ========================== */
+  const PEXELS_KEY = "fT6wmK0pwLddKDyuQUU3I93FnBmVqjCpTWny8KbMTHo3eV2S3ecJwSCt";
+
+  /* =========================
+     Elements & state (camera)
+  ========================== */
   const els = {
     video: document.getElementById('video'),
     overlay: document.getElementById('overlay'),
@@ -179,33 +199,27 @@
     mute: document.getElementById('mute'),
     snapshot: document.getElementById('snapshot'),
     fps: document.getElementById('fps'),
-    emptyCount: document.getElementById('emptyCount'),
-    occCount: document.getElementById('occCount'),
-    personCount: document.getElementById('personCount'),
-    status: document.getElementById('status'),
     consent: document.getElementById('consent'),
-    toasts: document.getElementById('toasts'),
-    annoy: document.getElementById('annoy'),
     invert: document.getElementById('invert'),
-    modalBack: document.getElementById('modalBack'),
-    mOk: document.getElementById('mOk'),
-    mCancel: document.getElementById('mCancel')
+    toasts: document.getElementById('toasts'),
+    reelsPanel: document.getElementById('reelsPanel'),
   };
+
   let model = null, stream = null, running = false, ctx = els.overlay.getContext('2d');
   let muted = false, lastPing = 0, cooldown = 1500, startClicks = 0;
   let animId = 0, lastT = performance.now(), frames = 0;
   let audioUnlocked = false;
 
-  // ==== Audio ====
-  const audio = new Audio('assets/sonar.mp3'); // served over http(s)
-  audio.preload = 'auto';
+  /* =========================
+     Audio (sonar)
+  ========================== */
+  const audio = new Audio('sonar.mp3'); audio.preload = 'auto';
+  document.addEventListener('pointerdown', unlockAudio, { once: true });
+  document.addEventListener('keydown', unlockAudio, { once: true });
   function unlockAudio(){
-    if (audioUnlocked) return;
-    audioUnlocked = true;
-    // Try to prime the audio; Safari/iOS needs a gesture first
+    if (audioUnlocked) return; audioUnlocked = true;
     audio.volume = 0.001;
-    audio.play().then(()=>{ audio.pause(); audio.currentTime=0; audio.volume = 1; })
-      .catch(()=>{ /* shrug */ });
+    audio.play().then(()=>{ audio.pause(); audio.currentTime=0; audio.volume=1; }).catch(()=>{});
   }
   function playPing(){
     if(muted) return;
@@ -214,230 +228,277 @@
     lastPing = now;
     const tryAudio = () => audio.cloneNode(true).play().catch(()=>synthPing());
     if (audio && audio.src) { tryAudio(); } else { synthPing(); }
-    toast('🔔 Occupied chair detected', 'ok');
   }
   function synthPing(){
     const Ctx = window.AudioContext || window.webkitAudioContext;
-    const ac = new Ctx();
-    const o = ac.createOscillator();
-    const g = ac.createGain();
-    o.type = 'sine'; o.frequency.setValueAtTime(900, ac.currentTime);
-    o.frequency.exponentialRampToValueAtTime(500, ac.currentTime + 0.18);
+    const ac = new Ctx(); const o = ac.createOscillator(); const g = ac.createGain();
+    o.type='sine'; o.frequency.setValueAtTime(900, ac.currentTime);
+    o.frequency.exponentialRampToValueAtTime(500, ac.currentTime+0.18);
     g.gain.setValueAtTime(0.05, ac.currentTime);
-    g.gain.exponentialRampToValueAtTime(0.0001, ac.currentTime + 0.18);
-    o.connect(g).connect(ac.destination);
-    o.start(); o.stop(ac.currentTime + 0.18);
+    g.gain.exponentialRampToValueAtTime(0.0001, ac.currentTime+0.18);
+    o.connect(g).connect(ac.destination); o.start(); o.stop(ac.currentTime+0.18);
   }
   els.sound.addEventListener('change', () => {
-    const file = els.sound.files?.[0];
-    if (!file) return;
-    const url = URL.createObjectURL(file);
-    audio.src = url;
-    audio.load();
-    toast('🎵 Custom sound armed', 'warn');
+    const file = els.sound.files?.[0]; if (!file) return;
+    const url = URL.createObjectURL(file); audio.src = url; audio.load();
+    toast('🎵 Custom sonar armed','warn');
   });
 
-  // ==== Utils ====
+  /* =============== Utils =============== */
   function toast(msg, tone='muted', t=1800){
-    const d = document.createElement('div');
-    d.className = `toast ${tone}`;
-    d.textContent = msg;
-    els.toasts.appendChild(d);
-    setTimeout(()=>{ d.remove(); }, t);
+    const d = document.createElement('div'); d.className = `toast ${tone}`; d.textContent = msg;
+    els.toasts.appendChild(d); setTimeout(()=>d.remove(), t);
   }
   function iou(a,b){
     const x1 = Math.max(a.x, b.x), y1 = Math.max(a.y, b.y);
     const x2 = Math.min(a.x+a.w, b.x+b.w), y2 = Math.min(a.y+a.h, b.y+b.h);
     const inter = Math.max(0,x2-x1) * Math.max(0,y2-y1);
-    const ua = a.w*a.h + b.w*b.h - inter;
-    return ua <= 0 ? 0 : inter/ua;
+    const ua = a.w*a.h + b.w*b.h - inter; return ua<=0?0:inter/ua;
   }
   function centerInside(a,b){
     const cx = a.x + a.w/2, cy = a.y + a.h/2;
     return (cx>=b.x && cx<=b.x+b.w && cy>=b.y && cy<=b.y+b.h);
   }
 
-  // ==== Camera ====
+  /* ============ Camera / Model ============ */
   async function listCameras(){
     const devices = await navigator.mediaDevices.enumerateDevices();
     const cams = devices.filter(d => d.kind === 'videoinput');
-    els.cameras.innerHTML = '';
-    cams.forEach((c,i) => {
-      const opt = document.createElement('option');
-      opt.value = c.deviceId;
-      opt.textContent = c.label || `Camera ${i+1}`;
-      els.cameras.appendChild(opt);
+    els.cameras.innerHTML = ''; cams.forEach((c,i) => {
+      const opt = document.createElement('option'); opt.value = c.deviceId;
+      opt.textContent = c.label || `Camera ${i+1}`; els.cameras.appendChild(opt);
     });
   }
   async function startCamera(){
     stopCamera();
     const deviceId = els.cameras.value || undefined;
     stream = await navigator.mediaDevices.getUserMedia({
-      video: deviceId ? {deviceId:{exact:deviceId}} : {facingMode:'environment'},
-      audio: false
+      video: deviceId ? {deviceId:{exact:deviceId}} : {facingMode:'environment'}, audio:false
     });
-    els.video.srcObject = stream;
-    await els.video.play();
-    els.overlay.width = els.video.videoWidth;
-    els.overlay.height = els.video.videoHeight;
-    running = true;
-    loop();
+    els.video.srcObject = stream; await els.video.play();
+    els.overlay.width = els.video.videoWidth; els.overlay.height = els.video.videoHeight;
+    running = true; loop();
   }
   function stopCamera(){
-    running = false;
-    cancelAnimationFrame(animId);
+    running = false; cancelAnimationFrame(animId);
     if(stream){ stream.getTracks().forEach(t => t.stop()); stream = null; }
     ctx.clearRect(0,0,els.overlay.width, els.overlay.height);
   }
-
-  // ==== Model ====
   async function loadModel(){
-    els.status.textContent = 'Loading COCO-SSD model…';
     model = await cocoSsd.load({base:'lite_mobilenet_v2'});
-    els.status.textContent = 'Model ready';
-    els.status.className = 'ok';
-    toast('🧠 Model loaded. Pretend it’s YOLO.', 'ok', 2000);
+    toast('🧠 Model ready','ok',1500);
   }
-
-  // ==== Loop ====
   async function loop(){
     if(!running || !model){ animId = requestAnimationFrame(loop); return; }
-    const preds = await model.detect(els.video);
-    draw(preds);
+    const preds = await model.detect(els.video); draw(preds);
     animId = requestAnimationFrame(loop);
-    // FPS calc
     frames++; const now = performance.now();
-    if(now - lastT > 1000){ els.fps.textContent = frames; frames = 0; lastT = now; }
-    if (els.annoy.checked && Math.random() < 0.02) toast('Pro-tip: turn it off and on again.', 'muted', 1200);
+    if(now - lastT > 1000){ lastT = now; frames = 0; }
   }
-
   function draw(preds){
-    // Hostile UX: reversed slider visually, but value is still the same; so we just use it directly.
-    const confThr = parseFloat(els.conf.value);
-    cooldown = parseInt(els.cool.value);
-    els.confv.textContent = confThr.toFixed(2);
-    els.coolv.textContent = (cooldown/1000).toFixed(1)+'s';
+    const confThr = parseFloat(els.conf.value); cooldown = parseInt(els.cool.value);
     ctx.clearRect(0,0,els.overlay.width, els.overlay.height);
-
-    const persons = [], chairs = [];
-    preds.forEach(p => {
-      if (p.score < confThr) return;
-      const [x,y,w,h] = p.bbox;
-      const box = {x,y,w,h,score:p.score,class:p.class};
-      if(p.class === 'person') persons.push(box);
-      if(p.class === 'chair' || p.class === 'couch') chairs.push(box);
+    const persons=[], chairs=[];
+    preds.forEach(p=>{
+      if(p.score<confThr) return;
+      const [x,y,w,h] = p.bbox; const box={x,y,w,h,score:p.score,class:p.class};
+      if(p.class==='person') persons.push(box);
+      if(p.class==='chair'||p.class==='couch') chairs.push(box);
     });
-
-    let empty = 0, occupied = 0;
-    chairs.forEach(ch => {
-      let occ = false;
-      for(const pe of persons){
-        if (iou(ch,pe) >= 0.25 || centerInside(pe, ch)) { occ = true; break; }
-      }
-      if(occ){ drawBox(ch,'occupied'); occupied++; } else { drawBox(ch,'empty'); empty++; }
+    let occupied=0;
+    chairs.forEach(ch=>{
+      let occ=false; for(const pe of persons){ if(iou(ch,pe)>=0.25||centerInside(pe,ch)){ occ=true; break; } }
+      drawBox(ch, occ?'occupied':'empty'); if(occ) occupied++;
     });
-    persons.forEach(pe => drawBox(pe,'person'));
-    els.emptyCount.textContent = empty;
-    els.occCount.textContent = occupied;
-    els.personCount.textContent = persons.length;
-
-    if (occupied > 0) playPing(); // ping on occupied chairs
+    persons.forEach(pe=>drawBox(pe,'person'));
+    if(occupied>0) playPing();
   }
-
   function drawBox(b,type){
-    ctx.save();
     const col = type==='empty' ? '#57dba1' : type==='occupied' ? '#ff6b6b' : '#60a5fa';
-    ctx.strokeStyle = col; ctx.lineWidth = 3;
-    ctx.strokeRect(b.x,b.y,b.w,b.h);
-    ctx.fillStyle = 'rgba(0,0,0,.6)';
-    ctx.fillRect(b.x, b.y-20, 140, 20);
-    ctx.fillStyle = col;
-    ctx.font = '12px system-ui,-apple-system,Segoe UI,Roboto,sans-serif';
-    const txt = type==='person' ? 'person' : (type==='empty'?'empty chair':'occupied chair');
+    ctx.strokeStyle = col; ctx.lineWidth = 3; ctx.strokeRect(b.x,b.y,b.w,b.h);
+    ctx.fillStyle='rgba(0,0,0,.6)'; ctx.fillRect(b.x,b.y-20,140,20);
+    ctx.fillStyle=col; ctx.font='12px system-ui,-apple-system,Segoe UI,Roboto';
+    const txt = type==='person'?'person':(type==='empty'?'empty chair':'occupied chair');
     ctx.fillText(`${txt} ${(b.score*100|0)}%`, b.x+6, b.y-6);
-    ctx.restore();
   }
 
-  // ==== UI Shenanigans ====
-  // Start requires consent + 2 clicks + a modal confirm, because points.
   els.start.addEventListener('click', async ()=>{
     unlockAudio();
-    if(!els.consent.checked){ toast('Please agree to our EULV about chairs.', 'err', 1800); return; }
-    startClicks++;
-    if(startClicks === 1){ toast('Click again to really start.', 'warn'); return; }
-    // modal confirm
-    showModal().then(async ()=>{
-      try{
-        if(!model) await loadModel();
-        await listCameras();
-        await startCamera();
-        toast('🎬 Scanning commenced.', 'ok');
-      }catch(e){
-        console.error(e); els.status.textContent = 'Camera error'; els.status.className='err';
-        alert('Could not access camera. If using Chrome, run from http://localhost (not file://). Try: python3 -m http.server');
-      }
-    }).catch(()=>{ startClicks = 0; toast('Start canceled via triple-confirm.', 'muted'); });
+    if(!els.consent.checked){ toast('Please agree to the EULV about chairs.','err'); return; }
+    startClicks++; if(startClicks===1){ toast('Click again to really start.','warn'); return; }
+    try{ if(!model) await loadModel(); await listCameras(); await startCamera(); toast('🎬 Scanning','ok'); }
+    catch(e){ console.error(e); alert('Camera error. Serve from http://localhost (python3 -m http.server)'); }
   });
-
-  els.stop.addEventListener('click', ()=>{
-    stopCamera(); startClicks = 0;
-    toast('🛑 Mission aborted.', 'warn');
-  });
-
-  els.mute.addEventListener('click', ()=>{
-    muted = !muted; els.mute.textContent = muted ? 'Unmute (Louder)' : 'Mute (?)';
-    toast(muted ? '🤫 Silence acquired.' : '🔊 Chaos restored.', muted ? 'muted' : 'ok');
-  });
-
+  els.stop.addEventListener('click', ()=>{ stopCamera(); startClicks=0; toast('🛑 Stopped','warn'); });
+  els.mute.addEventListener('click', ()=>{ muted=!muted; els.mute.textContent = muted?'Unmute':'Mute'; });
   els.snapshot.addEventListener('click', ()=>{
-    const tmp = document.createElement('canvas');
-    tmp.width = els.overlay.width; tmp.height = els.overlay.height;
-    const c = tmp.getContext('2d');
-    c.drawImage(els.video, 0,0,tmp.width,tmp.height);
-    c.drawImage(els.overlay, 0,0);
-    const url = tmp.toDataURL('image/png');
-    const a = document.createElement('a'); a.href=url; a.download='seat-sonar-evidence.png'; a.click();
-    toast('📸 Evidence secured.', 'ok');
+    const c=document.createElement('canvas'); c.width=els.overlay.width; c.height=els.overlay.height;
+    const d=c.getContext('2d'); d.drawImage(els.video,0,0,c.width,c.height); d.drawImage(els.overlay,0,0);
+    const a=document.createElement('a'); a.href=c.toDataURL('image/png'); a.download='seat-sonar.png'; a.click();
   });
-
-  els.annoy.addEventListener('change', ()=>{
-    const jig = v => v ? 'shaky' : '';
-    els.start.classList.toggle('shaky', els.annoy.checked);
-    els.stop.classList.toggle('shaky', els.annoy.checked);
-    toast(els.annoy.checked ? 'Annoy Mode ENABLED. You asked for this.' : 'Annoy Mode disabled. Boring.', 'warn');
-  });
-
-  els.invert.addEventListener('change', ()=>{
-    const f = els.invert.checked ? 'invert(1) hue-rotate(180deg)' : 'none';
-    els.video.style.filter = f; toast(els.invert.checked?'Night Vision: ON':'Night Vision: OFF','muted');
-  });
-
-  window.addEventListener('keydown', (e)=>{
+  els.invert.addEventListener('change', ()=>{ els.video.style.filter = els.invert.checked?'invert(1) hue-rotate(180deg)':'none'; });
+  window.addEventListener('keydown',(e)=>{
     if(e.key==='s'||e.key==='S'){ if(running) els.stop.click(); else els.start.click(); }
     if(e.key==='q'||e.key==='Q'){ els.mute.click(); }
     if(e.code==='Space'){ e.preventDefault(); playPing(); }
-    if(e.key==='f'||e.key==='F'){ document.documentElement.requestFullscreen?.(); }
+    if(e.key==='j'||e.key==='J'||e.key==='ArrowDown'){ jump(1); }
+    if(e.key==='k'||e.key==='K'||e.key==='ArrowUp'){ jump(-1); }
+    if(e.key==='m'||e.key==='M'){ if(activeVideo){ activeVideo.muted=!activeVideo.muted; } }
+    if(e.key==='l'||e.key==='L'){ if(activeLike){ activeLike.dataset.n = (+activeLike.dataset.n||0)+1; activeLike.innerHTML = `❤<small>${activeLike.dataset.n}</small>`; } }
   });
+  if (navigator.mediaDevices?.enumerateDevices) navigator.mediaDevices.enumerateDevices().then(()=>listCameras()).catch(()=>{});
 
-  if (navigator.mediaDevices?.enumerateDevices) {
-    navigator.mediaDevices.enumerateDevices().then(()=>listCameras()).catch(()=>{});
+  /* ============ REELS (portrait, snap, “entertainment mode”) ============ */
+  const FUN_QUERIES = [
+    'study library','coffee shop ambience','campus life','cozy reading',
+    'productivity','student life','modern office','workspace aesthetic',
+    'minimalist desk','book collection','typing keyboard','lofi study',
+    'rain window','city timelapse','nature relax','morning routine'
+  ];
+  const reelsState = { 
+    page:1, perPage:8, loading:false, eof:false,
+    query: new URL(location.href).searchParams.get('q') || null,
+    funIndex: 0
+  };
+
+  let activeVideo=null, activeLike=null, activeReel=null, progressInterval=null;
+
+  // Autoplay/pause when 50% visible
+  const io = new IntersectionObserver((entries)=>{
+    entries.forEach(e=>{
+      const v = e.target.querySelector('video'); if(!v) return;
+      const likeBtn = e.target.querySelector('[data-like]');
+      const progressBar = e.target.querySelector('.progress-bar');
+      if (e.isIntersecting && e.intersectionRatio>=0.5){
+        if(activeVideo && activeVideo!==v){ activeVideo.pause(); activeVideo.currentTime=0; }
+        if(progressInterval) clearInterval(progressInterval);
+        activeVideo=v; activeLike=likeBtn; activeReel=e.target;
+        v.play().catch(()=>{});
+        e.target.classList.add('active'); e.target.classList.remove('loading');
+        if(progressBar){
+          progressInterval = setInterval(()=>{
+            if(!v.duration) return;
+            const pct = (v.currentTime / v.duration) * 100;
+            progressBar.style.width = pct + '%';
+            if(pct>=99.5){ progressBar.style.width='0%'; v.currentTime=0; }
+          }, 100);
+        }
+      } else {
+        v.pause(); e.target.classList.remove('active');
+        if(progressBar) progressBar.style.width='0%';
+      }
+    });
+  }, { root: els.reelsPanel, threshold: [0, .5, 1] });
+
+  function pickBestFile(files){
+    // Prefer vertical (≈9:16) and at least 720px tall
+    let best=null, bestScore=1e9;
+    files.filter(f=>/mp4/i.test(f.file_type||'')).forEach(f=>{
+      const w=f.width||0, h=f.height||1, r=w/h; const score=Math.abs(r-0.5625) + (h<720?1:0);
+      if(score<bestScore){ best=f; bestScore=score; }
+    });
+    return best || files.sort((a,b)=>(b.height||0)-(a.height||0))[0] || files[0];
   }
 
-  // Modal helpers
-  function showModal(){
-    return new Promise((resolve,reject)=>{
-      els.modalBack.style.display = 'flex';
-      const ok = ()=>{ cleanup(); resolve(); };
-      const cancel = ()=>{ cleanup(); reject(); };
-      function cleanup(){
-        els.modalBack.style.display = 'none';
-        els.mOk.removeEventListener('click', ok);
-        els.mCancel.removeEventListener('click', cancel);
-      }
-      els.mOk.addEventListener('click', ok);
-      els.mCancel.addEventListener('click', cancel);
+  function makeReel({src, caption, author, tag, id}){
+    const wrap=document.createElement('div'); wrap.className='reel loading'; wrap.dataset.id=id;
+
+    const loader=document.createElement('div'); loader.className='loader'; wrap.appendChild(loader);
+
+    const v=document.createElement('video'); 
+    v.src=src; v.loop=true; v.muted=true; v.playsInline=true; v.preload='metadata';
+    v.addEventListener('loadeddata', ()=>{ wrap.classList.remove('loading'); loader.remove(); });
+    wrap.appendChild(v);
+
+    const prog=document.createElement('div'); prog.className='progress';
+    const bar=document.createElement('div'); bar.className='progress-bar';
+    prog.appendChild(bar); wrap.appendChild(prog);
+
+    const topTag=document.createElement('div'); topTag.className='tag'; topTag.textContent=tag||'Pexels';
+    wrap.appendChild(topTag);
+
+    const cap=document.createElement('div'); cap.className='cap';
+    if(caption){ const t=document.createElement('div'); t.className='cap-title'; t.textContent=caption; cap.appendChild(t); }
+    if(author){ const a=document.createElement('div'); a.className='cap-author'; a.textContent='by '+author; cap.appendChild(a); }
+    wrap.appendChild(cap);
+
+    const side=document.createElement('div'); side.className='sideBtns';
+    const like=document.createElement('button'); like.className='iconBtn'; like.innerHTML='❤<small>0</small>'; like.dataset.like=''; like.dataset.n='0';
+    like.onclick=()=>{ const n=(+like.dataset.n||0)+1; like.dataset.n=n; like.innerHTML=`❤<small>${n}</small>`; };
+    const share=document.createElement('button'); share.className='iconBtn'; share.innerHTML='📤<small></small>';
+    share.onclick=()=>{ (navigator.share ? navigator.share({title:caption||'Reel', url:src}) : navigator.clipboard.writeText(src).then(()=>{})).catch(()=>{}); };
+    const mute=document.createElement('button'); mute.className='iconBtn'; mute.innerHTML='🔇<small></small>';
+    mute.onclick=()=>{ v.muted=!v.muted; mute.innerHTML=v.muted?'🔇<small></small>':'🔊<small></small>'; };
+    side.append(like,share,mute);
+    wrap.appendChild(side);
+
+    els.reelsPanel.appendChild(wrap);
+    io.observe(wrap);
+    return wrap;
+  }
+
+  async function fetchPexels(url){
+    const res = await fetch(url, { headers:{ Authorization: PEXELS_KEY }});
+    if(!res.ok) throw new Error('Pexels '+res.status);
+    return res.json();
+  }
+
+  function addClips(json, tagLabel){
+    const vids=json.videos||[]; if(!vids.length){ reelsState.eof=true; return; }
+    vids.forEach(v=>{
+      const files = v.video_files || [];
+      const best = pickBestFile(files);
+      if(!best?.link) return;
+      makeReel({
+        src: best.link,
+        caption: (v.id ? 'Clip #' + v.id : '') || '',
+        author: v.user?.name || 'Pexels',
+        tag: tagLabel || 'Pexels',
+        id: v.id
+      });
     });
   }
+
+  function nextQuery(){
+    if (reelsState.query) return { q: reelsState.query, tag: reelsState.query };
+    const q = FUN_QUERIES[reelsState.funIndex % FUN_QUERIES.length];
+    reelsState.funIndex++; return { q, tag:q };
+  }
+
+  async function loadNext(){
+    if(reelsState.loading || reelsState.eof) return;
+    reelsState.loading=true;
+    try{
+      const { q, tag } = nextQuery();
+      const url=`https://api.pexels.com/videos/search?query=${encodeURIComponent(q)}&per_page=${reelsState.perPage}&page=${reelsState.page++}`;
+      const data = await fetchPexels(url);
+      addClips(data, tag);
+    }catch(e){
+      console.error(e);
+      // Minimal fallback if Pexels is unavailable
+      makeReel({ src:'https://www.w3schools.com/html/mov_bbb.mp4', caption:'Sample (fallback)', author:'W3Schools', tag:'Fallback', id:'fallback-'+Date.now() });
+      reelsState.eof = true;
+    }finally{
+      reelsState.loading=false;
+    }
+  }
+
+  // Infinite scroll trigger
+  els.reelsPanel.addEventListener('scroll', ()=>{
+    const el = els.reelsPanel;
+    if(el.scrollTop + el.clientHeight >= el.scrollHeight - 160) loadNext();
+  });
+
+  // Keyboard jump between reels
+  function jump(dir){
+    const cards=[...els.reelsPanel.querySelectorAll('.reel')];
+    const idx=cards.findIndex(c=>c.classList.contains('active'));
+    let next = Math.max(0, Math.min(cards.length-1, (idx<0?0:idx)+dir));
+    cards[next]?.scrollIntoView({behavior:'smooth', block:'start'});
+  }
+
+  // Seed with two pages for smoothness
+  loadNext(); loadNext();
 })();
 </script>
 </body>
