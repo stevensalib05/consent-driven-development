@@ -1,0 +1,328 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Weldon Seat Sonar — YOLO(ish) Chair Detector</title>
+  <style>
+    :root{
+      --bg:#0b1117; --card:#121a22; --muted:#2a3a47; --text:#cfe6ff; --green:#57dba1; --red:#ff6b6b; --yellow:#ffd166;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif}
+    header{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:14px 18px;background:linear-gradient(180deg,#0e1620,#0b111700);position:sticky;top:0;z-index:2;border-bottom:1px solid #0f1720}
+    h1{font-size:clamp(18px,2.2vw,24px);margin:0;font-weight:650;letter-spacing:.2px}
+    .badge{font-size:12px;border:1px solid var(--muted);padding:4px 8px;border-radius:999px;opacity:.8}
+    main{max-width:1100px;margin:22px auto;padding:0 16px 80px}
+    .grid{display:grid;grid-template-columns:1.2fr .8fr;gap:18px}
+    .card{background:var(--card);border:1px solid #14202b;border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.25);overflow:hidden}
+    .pane{padding:14px}
+    .controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:12px;border-top:1px solid #172532;background:#0e1620}
+    button,select,input[type="file"]::file-selector-button{
+      background:#1a2630;color:var(--text);border:1px solid var(--muted);border-radius:10px;padding:8px 12px;cursor:pointer
+    }
+    button:hover{background:#223140}
+    button.primary{background:#254055;border-color:#2f536d}
+    .pill{display:inline-flex;gap:8px;align-items:center;background:#18232e;border:1px solid #253645;border-radius:999px;padding:6px 10px}
+    label.small{font-size:12px;opacity:.85}
+    .slider{display:flex;align-items:center;gap:10px}
+    input[type="range"]{accent-color:#6fc5ff}
+    canvas, video{width:100%;height:auto;background:#000;border-bottom:1px solid #273544;display:block}
+    .legend{display:flex;gap:10px;flex-wrap:wrap;padding:10px 14px;border-top:1px dashed #233242}
+    .chip{display:inline-flex;gap:8px;align-items:center;padding:4px 8px;border-radius:999px;border:1px solid #253645;background:#17222d;font-size:12px}
+    .dot{width:10px;height:10px;border-radius:50%}
+    .dot.green{background:var(--green)}
+    .dot.red{background:var(--red)}
+    .dot.blue{background:#60a5fa}
+    .muted{opacity:.65}
+    footer{position:fixed;bottom:0;left:0;right:0;padding:10px 14px;background:rgba(10,15,20,.85);backdrop-filter:blur(8px);border-top:1px solid #12202c;display:flex;gap:12px;justify-content:center}
+    .kbd{background:#111a22;border:1px solid #2a3a47;border-radius:6px;padding:0 6px;font-size:12px}
+    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .ok{color:var(--green)} .warn{color:var(--yellow)} .err{color:var(--red)}
+  </style>
+  <!-- TensorFlow.js + COCO-SSD (browser-side detection) -->
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.16.0/dist/tf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3"></script>
+</head>
+<body>
+  <header>
+    <h1>Weldon Seat Sonar <span class="badge">camera stays local • no uploads</span></h1>
+    <div class="row muted">Occupied-chair pings using on-device COCO-SSD (chair/person).</div>
+  </header>
+
+  <main class="grid">
+    <section class="card">
+      <video id="video" playsinline muted></video>
+      <canvas id="overlay"></canvas>
+      <div class="legend">
+        <span class="chip"><span class="dot green"></span> Empty chair</span>
+        <span class="chip"><span class="dot red"></span> Occupied chair</span>
+        <span class="chip"><span class="dot blue"></span> Person</span>
+        <span class="chip muted">FPS: <span id="fps">0</span></span>
+        <span class="chip muted">Model: COCO-SSD</span>
+      </div>
+      <div class="controls">
+        <button id="start" class="primary">Start Camera</button>
+        <button id="stop">Stop</button>
+        <select id="cameras"></select>
+        <div class="pill">
+          <label class="small">Confidence</label>
+          <input id="conf" type="range" min="0.2" max="0.9" step="0.05" value="0.5" />
+          <span id="confv">0.50</span>
+        </div>
+        <div class="pill">
+          <label class="small">Ping cooldown</label>
+          <input id="cool" type="range" min="500" max="5000" step="100" value="1500" />
+          <span id="coolv">1.5s</span>
+        </div>
+        <div class="pill">
+          <label class="small">Sound</label>
+          <input type="file" id="sound" accept="audio/*" />
+          <span class="muted small">or uses default</span>
+        </div>
+        <button id="mute">Mute</button>
+        <button id="snapshot">Snapshot</button>
+      </div>
+    </section>
+
+    <aside class="card pane">
+      <h3 style="margin-top:6px">How it decides “occupied vs empty”</h3>
+      <ol class="muted">
+        <li>Detects <b>chair</b> and <b>person</b> boxes with COCO-SSD (on-device).</li>
+        <li>A chair is “occupied” if any person overlaps IoU ≥ 0.25 <i>or</i> a person’s center lands inside the chair box.</li>
+        <li>Otherwise the chair is “empty”. If at least one <b>occupied</b> chair is found, a ping plays (respecting cooldown).</li>
+      </ol>
+      <hr style="border-color:#1a2a36;margin:14px 0">
+      <div class="row"><b>Status:</b>&nbsp;<span id="status" class="warn">Model loading…</span></div>
+      <div class="row"><b>Empty chairs:</b>&nbsp;<span id="emptyCount">0</span></div>
+      <div class="row"><b>Occupied chairs:</b>&nbsp;<span id="occCount">0</span></div>
+      <div class="row"><b>Persons:</b>&nbsp;<span id="personCount">0</span></div>
+      <p class="muted" style="margin-top:10px">
+        Tip: aim at a study area; keep confidence modest (0.45–0.55). Good light helps.
+      </p>
+      <details style="margin-top:10px">
+        <summary>Privacy</summary>
+        <p class="muted">Everything runs locally in your browser. The camera stream never leaves your device.</p>
+      </details>
+    </aside>
+  </main>
+
+  <footer class="muted">
+    Keys: <span class="kbd">S</span> start/stop • <span class="kbd">Q</span> mute/unmute • <span class="kbd">Space</span> ping • <span class="kbd">F</span> fullscreen
+  </footer>
+
+<script>
+(() => {
+  const els = {
+    video: document.getElementById('video'),
+    overlay: document.getElementById('overlay'),
+    start: document.getElementById('start'),
+    stop: document.getElementById('stop'),
+    cameras: document.getElementById('cameras'),
+    conf: document.getElementById('conf'),
+    confv: document.getElementById('confv'),
+    cool: document.getElementById('cool'),
+    coolv: document.getElementById('coolv'),
+    sound: document.getElementById('sound'),
+    mute: document.getElementById('mute'),
+    snapshot: document.getElementById('snapshot'),
+    fps: document.getElementById('fps'),
+    emptyCount: document.getElementById('emptyCount'),
+    occCount: document.getElementById('occCount'),
+    personCount: document.getElementById('personCount'),
+    status: document.getElementById('status')
+  };
+  let model = null, stream = null, running = false, ctx = els.overlay.getContext('2d');
+  let muted = false, lastPing = 0, cooldown = 1500;
+  let animId = 0, lastT = performance.now(), frames = 0;
+
+  // Default sound (bundled) or uploaded file
+  const audio = new Audio('assets/sonar.mp3'); // served over http(s)
+  audio.preload = 'auto';
+  function playPing(){
+    if(muted) return;
+    const now = performance.now();
+    if(now - lastPing < cooldown) return;
+    lastPing = now;
+    const tryAudio = () => audio.cloneNode(true).play().catch(()=>synthPing());
+    if (audio && audio.src) { tryAudio(); } else { synthPing(); }
+  }
+  function synthPing(){
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    const ac = new Ctx();
+    const o = ac.createOscillator();
+    const g = ac.createGain();
+    o.type = 'sine'; o.frequency.setValueAtTime(900, ac.currentTime);
+    o.frequency.exponentialRampToValueAtTime(500, ac.currentTime + 0.18);
+    g.gain.setValueAtTime(0.05, ac.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.0001, ac.currentTime + 0.18);
+    o.connect(g).connect(ac.destination);
+    o.start(); o.stop(ac.currentTime + 0.18);
+  }
+  els.sound.addEventListener('change', () => {
+    const file = els.sound.files?.[0];
+    if (!file) return;
+    const url = URL.createObjectURL(file);
+    audio.src = url;
+    audio.load();
+  });
+
+  function iou(a,b){
+    const x1 = Math.max(a.x, b.x), y1 = Math.max(a.y, b.y);
+    const x2 = Math.min(a.x+a.w, b.x+b.w), y2 = Math.min(a.y+a.h, b.y+b.h);
+    const inter = Math.max(0,x2-x1) * Math.max(0,y2-y1);
+    const ua = a.w*a.h + b.w*b.h - inter;
+    return ua <= 0 ? 0 : inter/ua;
+  }
+  function centerInside(a,b){
+    const cx = a.x + a.w/2, cy = a.y + a.h/2;
+    return (cx>=b.x && cx<=b.x+b.w && cy>=b.y && cy<=b.y+b.h);
+  }
+
+  async function listCameras(){
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    const cams = devices.filter(d => d.kind === 'videoinput');
+    els.cameras.innerHTML = '';
+    cams.forEach((c,i) => {
+      const opt = document.createElement('option');
+      opt.value = c.deviceId;
+      opt.textContent = c.label || `Camera ${i+1}`;
+      els.cameras.appendChild(opt);
+    });
+  }
+
+  async function startCamera(){
+    stopCamera();
+    const deviceId = els.cameras.value || undefined;
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: deviceId ? {deviceId:{exact:deviceId}} : {facingMode:'environment'},
+      audio: false
+    });
+    els.video.srcObject = stream;
+    await els.video.play();
+
+    els.overlay.width = els.video.videoWidth;
+    els.overlay.height = els.video.videoHeight;
+    running = true;
+    loop();
+  }
+  function stopCamera(){
+    running = false;
+    cancelAnimationFrame(animId);
+    if(stream){
+      stream.getTracks().forEach(t => t.stop());
+      stream = null;
+    }
+    ctx.clearRect(0,0,els.overlay.width, els.overlay.height);
+  }
+
+  async function loadModel(){
+    els.status.textContent = 'Loading COCO-SSD model…';
+    model = await cocoSsd.load({base:'lite_mobilenet_v2'});
+    els.status.textContent = 'Model ready';
+    els.status.className = 'ok';
+  }
+
+  async function loop(){
+    if(!running || !model){ animId = requestAnimationFrame(loop); return; }
+    const preds = await model.detect(els.video);
+    draw(preds);
+    animId = requestAnimationFrame(loop);
+    // FPS calc
+    frames++;
+    const now = performance.now();
+    if(now - lastT > 1000){ els.fps.textContent = frames; frames = 0; lastT = now; }
+  }
+
+  function draw(preds){
+    const confThr = parseFloat(els.conf.value);
+    cooldown = parseInt(els.cool.value);
+    els.confv.textContent = confThr.toFixed(2);
+    els.coolv.textContent = (cooldown/1000).toFixed(1)+'s';
+    ctx.clearRect(0,0,els.overlay.width, els.overlay.height);
+
+    // Collect boxes
+    const persons = [];
+    const chairs = [];
+    preds.forEach(p => {
+      if (p.score < confThr) return;
+      const [x,y,w,h] = p.bbox;
+      const box = {x,y,w,h,score:p.score,class:p.class};
+      if(p.class === 'person') persons.push(box);
+      if(p.class === 'chair' || p.class === 'couch') chairs.push(box);
+    });
+
+    // Determine occupancy
+    let empty = 0, occupied = 0;
+    chairs.forEach(ch => {
+      let occ = false;
+      for(const pe of persons){
+        if (iou(ch,pe) >= 0.25 || centerInside(pe, ch)) { occ = true; break; }
+      }
+      if(occ) { drawBox(ch,'occupied'); occupied++; }
+      else    { drawBox(ch,'empty'); empty++; }
+    });
+    persons.forEach(pe => drawBox(pe,'person'));
+
+    els.emptyCount.textContent = empty;
+    els.occCount.textContent = occupied;
+    els.personCount.textContent = persons.length;
+
+    // 🔔 ping on occupied chairs (changed from empty > 0)
+    if (occupied > 0) playPing();
+  }
+
+  function drawBox(b,type){
+    ctx.save();
+    const col = type==='empty' ? '#57dba1' : type==='occupied' ? '#ff6b6b' : '#60a5fa';
+    ctx.strokeStyle = col; ctx.lineWidth = 3;
+    ctx.strokeRect(b.x,b.y,b.w,b.h);
+    ctx.fillStyle = 'rgba(0,0,0,.6)';
+    ctx.fillRect(b.x, b.y-20, 130, 20);
+    ctx.fillStyle = col;
+    ctx.font = '12px system-ui, -apple-system, Segoe UI, Roboto, sans-serif';
+    const txt = type==='person' ? 'person' : (type==='empty'?'empty chair':'occupied chair');
+    ctx.fillText(`${txt} ${(b.score*100|0)}%`, b.x+6, b.y-6);
+    ctx.restore();
+  }
+
+  // UI
+  els.start.addEventListener('click', async ()=>{
+    try{
+      if(!model) await loadModel();
+      await listCameras();
+      await startCamera();
+    }catch(e){
+      console.error(e); els.status.textContent = 'Camera error'; els.status.className='err';
+      alert('Could not access camera. If using Chrome, run from http://localhost (not file://). Try: python3 -m http.server');
+    }
+  });
+  els.stop.addEventListener('click', stopCamera);
+  els.mute.addEventListener('click', ()=>{
+    muted = !muted;
+    els.mute.textContent = muted ? 'Unmute' : 'Mute';
+  });
+  els.snapshot.addEventListener('click', ()=>{
+    const tmp = document.createElement('canvas');
+    tmp.width = els.overlay.width; tmp.height = els.overlay.height;
+    const c = tmp.getContext('2d');
+    c.drawImage(els.video, 0,0,tmp.width,tmp.height);
+    c.drawImage(els.overlay, 0,0);
+    const url = tmp.toDataURL('image/png');
+    const a = document.createElement('a'); a.href=url; a.download='seat-sonar.png'; a.click();
+  });
+  window.addEventListener('keydown', (e)=>{
+    if(e.key==='s'||e.key==='S'){ if(running) els.stop.click(); else els.start.click(); }
+    if(e.key==='q'||e.key==='Q'){ els.mute.click(); }
+    if(e.code==='Space'){ e.preventDefault(); playPing(); }
+    if(e.key==='f'||e.key==='F'){ document.documentElement.requestFullscreen?.(); }
+  });
+
+  // Pre-list cameras if allowed
+  if (navigator.mediaDevices?.enumerateDevices) {
+    navigator.mediaDevices.enumerateDevices().then(()=>listCameras()).catch(()=>{});
+  }
+})();
+</script>
+</body>
+</html>
