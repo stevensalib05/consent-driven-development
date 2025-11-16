@@ -197,43 +197,87 @@
   let audioUnlocked = false;
 
   // ==== Audio ====
-  const audio = new Audio('assets/sonar.mp3'); // served over http(s)
-  audio.preload = 'auto';
+  // List of default sounds in /audio
+  const soundFiles = [
+    'audio/fahhh.mp3',
+    'audio/metal-pipe.mp3',
+    'audio/oof.mp3',
+    'audio/sonar.mp3',
+    'audio/vine-boom.mp3'
+    // add more here as needed
+  ];
+
+  // Turn them into Audio objects
+  let audioBank = soundFiles.map(src => {
+    const a = new Audio(src);
+    a.preload = 'auto';
+    return a;
+  });
+  
   function unlockAudio(){
     if (audioUnlocked) return;
     audioUnlocked = true;
-    // Try to prime the audio; Safari/iOS needs a gesture first
-    audio.volume = 0.001;
-    audio.play().then(()=>{ audio.pause(); audio.currentTime=0; audio.volume = 1; })
-      .catch(()=>{ /* shrug */ });
+
+    // Prime ALL sounds (for iOS/Safari weirdness)
+    audioBank.forEach(a => {
+      a.volume = 0.001;
+      a.play()
+        .then(() => {
+          a.pause();
+          a.currentTime = 0;
+          a.volume = 1;
+        })
+        .catch(() => { /* shrug */ });
+    });
   }
+
+  function getRandomAudio() {
+    if (!audioBank.length) return null;
+    return audioBank[Math.floor(Math.random() * audioBank.length)];
+  }
+
   function playPing(){
-    if(muted) return;
+    if (muted) return;
     const now = performance.now();
-    if(now - lastPing < cooldown) return;
+    if (now - lastPing < cooldown) return;
     lastPing = now;
-    const tryAudio = () => audio.cloneNode(true).play().catch(()=>synthPing());
-    if (audio && audio.src) { tryAudio(); } else { synthPing(); }
+
+    const base = getRandomAudio();
+    if (base) {
+      const instance = base.cloneNode(true);
+      // optional extra chaos:
+      // instance.playbackRate = 0.8 + Math.random() * 0.6;
+      instance.play().catch(() => synthPing());
+    } else {
+      synthPing();
+    }
+
     toast('🔔 Occupied chair detected', 'ok');
   }
+
   function synthPing(){
     const Ctx = window.AudioContext || window.webkitAudioContext;
     const ac = new Ctx();
     const o = ac.createOscillator();
     const g = ac.createGain();
-    o.type = 'sine'; o.frequency.setValueAtTime(900, ac.currentTime);
+    o.type = 'sine'; 
+    o.frequency.setValueAtTime(900, ac.currentTime);
     o.frequency.exponentialRampToValueAtTime(500, ac.currentTime + 0.18);
     g.gain.setValueAtTime(0.05, ac.currentTime);
     g.gain.exponentialRampToValueAtTime(0.0001, ac.currentTime + 0.18);
     o.connect(g).connect(ac.destination);
-    o.start(); o.stop(ac.currentTime + 0.18);
+    o.start(); 
+    o.stop(ac.currentTime + 0.18);
   }
+
+  // File input: replaces bank with a single custom sound
   els.sound.addEventListener('change', () => {
     const file = els.sound.files?.[0];
     if (!file) return;
     const url = URL.createObjectURL(file);
-    audio.src = url;
-    audio.load();
+    const custom = new Audio(url);
+    custom.preload = 'auto';
+    audioBank = [custom]; // now all pings use the uploaded sound
     toast('🎵 Custom sound armed', 'warn');
   });
 
