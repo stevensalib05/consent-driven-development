@@ -203,7 +203,9 @@
     'audio/metal-pipe.mp3',
     'audio/oof.mp3',
     'audio/sonar.mp3',
-    'audio/vine-boom.mp3'
+    'audio/vine-boom.mp3',
+    'audio/67.mp3',
+    'audio/job.mp3'
     // add more here as needed
   ];
 
@@ -220,12 +222,12 @@
 
     // Prime ALL sounds (for iOS/Safari weirdness)
     audioBank.forEach(a => {
-      a.volume = 0.001;
+      a.volume = 1;
       a.play()
         .then(() => {
           a.pause();
           a.currentTime = 0;
-          a.volume = 1;
+          a.volume = 10;
         })
         .catch(() => { /* shrug */ });
     });
@@ -246,7 +248,8 @@
     if (base) {
       const instance = base.cloneNode(true);
       // optional extra chaos:
-      // instance.playbackRate = 0.8 + Math.random() * 0.6;
+      instance.playbackRate = 0.8 + Math.random() * 0.6;
+      
       instance.play().catch(() => synthPing());
     } else {
       synthPing();
