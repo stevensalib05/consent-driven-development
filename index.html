@@ -20,9 +20,11 @@
   .marq{white-space:nowrap;overflow:hidden;border-top:1px dashed #1a2a3a}
   .marq span{display:inline-block;padding:6px 0;animation:marq 16s linear infinite;color:#8fb8ff}
   @keyframes marq{0%{transform:translateX(100%)}100%{transform:translateX(-100%)}}
-  main{max-width:1400px;margin:16px auto 90px;padding:0 14px}
-  .grid{display:grid;grid-template-columns:1fr 520px;gap:18px}
+  main{max-width:1600px;margin:16px auto 90px;padding:0 14px}
+  .grid{display:grid;grid-template-columns:280px 1fr 520px;gap:18px}
+  @media (max-width:1400px){ .grid{grid-template-columns:240px 1fr 460px;gap:14px} }
   @media (max-width:1100px){ .grid{grid-template-columns:1fr} }
+  @media (max-width:1100px){ .adsPanel{display:none!important} }
 
   .card{background:var(--card);border:1px solid #14202b;border-radius:16px;
         box-shadow:0 10px 30px rgba(0,0,0,.25);overflow:hidden}
@@ -123,6 +125,55 @@
     border-radius:50%; animation:spin 1s linear infinite; z-index:2;
   }
   @keyframes spin{to{transform:translate(-50%,-50%) rotate(360deg)}}
+  
+  /* Cookie banner spam */
+  .cookieBanner{position:fixed;bottom:0;left:0;right:0;background:#0a0f14;border-top:2px solid #ffd166;
+    padding:20px;z-index:10;box-shadow:0 -4px 20px rgba(0,0,0,.5);animation:slideUp .3s ease;
+    display:flex;gap:16px;align-items:center}
+  @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+  .cookieBanner .sponsor-img{width:80px;height:80px;object-fit:contain;border-radius:8px;background:#fff;padding:8px}
+  .cookieBanner .content{flex:1}
+  .cookieBanner h3{margin:0 0 8px;color:var(--yellow)}
+  .cookieBanner p{margin:8px 0;font-size:13px;line-height:1.5}
+  .cookieBanner .btns{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+  .cookieBanner button{font-size:13px;padding:10px 16px}
+  .sponsor{color:#60a5fa;font-weight:bold}
+  
+  /* Popup spam */
+  .popup{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0);
+    background:#0f1620;border:3px solid #ffd166;border-radius:12px;padding:20px;max-width:400px;
+    box-shadow:0 8px 32px rgba(0,0,0,.6);z-index:11;animation:popIn .3s ease forwards}
+  @keyframes popIn{to{transform:translate(-50%,-50%) scale(1)}}
+  .popup-header{display:flex;gap:12px;align-items:center;margin-bottom:12px}
+  .popup-header img{width:60px;height:60px;object-fit:contain;border-radius:8px;background:#fff;padding:6px}
+  .popup h2{margin:0;color:var(--yellow);font-size:18px}
+  .popup p{margin:8px 0;font-size:14px}
+  .popup .close{position:absolute;top:8px;right:8px;background:#1a2630;border:1px solid var(--muted);
+    width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:16px;display:flex;align-items:center;
+    justify-content:center}
+  .popup .close:hover{background:#223140}
+  .popup-footer{margin-top:14px;padding-top:10px;border-top:1px solid #253645;font-size:11px;opacity:.7}
+  .overlay{position:fixed;inset:0;background:#0008;z-index:9;display:none}
+  .overlay.show{display:block}
+  
+  /* Ads sidebar */
+  .adsPanel{display:flex;flex-direction:column;gap:14px}
+  .adCard{background:var(--card);border:2px solid #ffd166;border-radius:12px;padding:12px;position:relative;
+    box-shadow:0 4px 16px rgba(255,209,102,.2);animation:pulse 2s ease-in-out infinite}
+  @keyframes pulse{0%,100%{border-color:#ffd166;box-shadow:0 4px 16px rgba(255,209,102,.2)}
+    50%{border-color:#60a5fa;box-shadow:0 4px 20px rgba(96,165,250,.4)}}
+  .adCard img{width:100%;height:auto;border-radius:8px;margin-bottom:8px;cursor:pointer;
+    transition:transform .2s;object-fit:cover}
+  .adCard img:hover{transform:scale(1.05) rotate(1deg)}
+  .adCard h4{margin:0 0 6px;font-size:14px;color:var(--yellow);text-transform:uppercase;letter-spacing:.5px}
+  .adCard p{margin:0;font-size:12px;line-height:1.4;opacity:.9}
+  .adBadge{position:absolute;top:-8px;right:-8px;background:var(--red);color:#fff;font-size:10px;
+    padding:4px 8px;border-radius:999px;font-weight:bold;animation:wiggle 1s ease-in-out infinite}
+  @keyframes wiggle{0%,100%{transform:rotate(-3deg)}50%{transform:rotate(3deg)}}
+  .adCard button{width:100%;margin-top:8px;background:var(--yellow);color:#0b1117;font-weight:bold;
+    border:none;padding:10px;border-radius:8px;cursor:pointer;font-size:13px}
+  .adCard button:hover{background:#ffd980;transform:translateY(-2px)}
+  .sticky-ads{position:sticky;top:90px}
 </style>
 
 <!-- TensorFlow.js + COCO-SSD -->
@@ -139,7 +190,34 @@
 </header>
 
 <main class="grid">
-  <!-- LEFT: camera + overlay -->
+  <!-- LEFT SIDEBAR: Sponsor Ads -->
+  <aside class="adsPanel sticky-ads">
+    <div id="ad1" class="adCard">
+      <span class="adBadge">SPONSORED</span>
+      <img src="images/sbm1.png" alt="Strik Baldinelli Moniz" onclick="this.parentElement.querySelector('button').click()">
+      <h4>⚖️ Legal Experts</h4>
+      <p>Strik Baldinelli Moniz LTD: Your chairs need legal protection. Call now!</p>
+      <button onclick="showSponsorPopup()">Learn More</button>
+    </div>
+    
+    <div id="ad2" class="adCard">
+      <span class="adBadge">AD</span>
+      <img src="images/shopify1.jpg" alt="Shopify" onclick="this.parentElement.querySelector('button').click()">
+      <h4>🛍️ Power Commerce</h4>
+      <p>Shopify: Sell chairs online. Or anything else. Probably chairs though.</p>
+      <button onclick="showSponsorPopup()">Start Selling</button>
+    </div>
+    
+    <div id="ad3" class="adCard">
+      <span class="adBadge">HOT</span>
+      <img src="images/aaron.webp" alt="Expert" onclick="this.parentElement.querySelector('button').click()">
+      <h4>💼 Meet Aaron</h4>
+      <p>"Every app should sell something" - Aaron, definitely</p>
+      <button onclick="showSponsorPopup()">Contact Expert</button>
+    </div>
+  </aside>
+
+  <!-- CENTER: camera + overlay -->
   <section class="card">
     <div class="camWrap">
       <video id="video" playsinline muted></video>
@@ -199,6 +277,26 @@
 
 <div id="toasts"></div>
 
+<!-- Cookie consent spam -->
+<div id="cookieBanner" class="cookieBanner" style="display:none">
+  <img id="cookieSponsorImg" class="sponsor-img" src="images/sbm1.png" alt="sponsor">
+  <div class="content">
+    <h3>🍪 This Website Uses Cookies (and your soul)</h3>
+    <p>By continuing, you agree to share your data with <span class="sponsor">Strik Baldinelli Moniz LTD</span> and <span class="sponsor">Shopify</span>. 
+    We'll track your chair-watching habits, your deepest fears, and that embarrassing thing you did in 2019.</p>
+    <p class="muted" style="font-size:11px">Cookies include: tracking, analytics, surveillance, chair-preference profiling, 
+    unauthorized life-coaching, targeted guilt-tripping, and mandatory sponsor appreciation.</p>
+    <div class="btns">
+      <button id="acceptAll" class="primary">Accept All (Wrong choice)</button>
+      <button id="rejectAll">Reject All (Also wrong)</button>
+      <button id="customize">Customize (This opens more popups)</button>
+    </div>
+  </div>
+</div>
+
+<!-- Popup overlay -->
+<div id="popupOverlay" class="overlay"></div>
+
 <script>
 (() => {
   /* =========================
@@ -233,6 +331,33 @@
   let muted = false, lastPing = 0, cooldown = 1500, startClicks = 0;
   let animId = 0, lastT = performance.now(), frames = 0;
   let audioUnlocked = false;
+  let cookieBannerShown = false, cookieAttempts = 0;
+  
+  // Sponsor images
+  const sponsorImages = [
+    'images/sbm1.png', 'images/smb2.jpeg', 'images/strik.webp',
+    'images/shopify1.jpg', 'images/shopify2.jpg', 'images/shopify3.jpg', 'images/shopify4.png',
+    'images/milf.jpeg'
+  ];
+  const peopleImages = ['images/aaron.webp', 'images/jahmad.webp'];
+  
+  // Sponsor popup messages with images
+  const sponsorPopups = [
+    {title: '🎊 Thank Our Sponsors!', text: 'This chair detection was brought to you by Strik Baldinelli Moniz LTD. Without them, you\'d be detecting chairs manually like a peasant.', img: 'images/sbm1.png'},
+    {title: '🛍️ Shopify Wants You!', text: 'Did you know Shopify powers over 1 million businesses? Now you do. You\'re welcome.', img: 'images/shopify1.jpg'},
+    {title: '⚖️ Legal Notice', text: 'Strik Baldinelli Moniz LTD reminds you: sitting in chairs may be subject to local regulations. Consult an attorney before occupying furniture.', img: 'images/strik.webp'},
+    {title: '💼 Career Opportunity!', text: 'Shopify is hiring! (Not really, but we got your attention.) Visit shopify.com to buy things you don\'t need.', img: 'images/shopify2.jpg'},
+    {title: '🏆 Premium Features!', text: 'Upgrade to Chair Detection Pro™ powered by our sponsors for only $99.99/month! Features: same as free version but with a logo.', img: 'images/shopify3.jpg'},
+    {title: '📢 Important Update', text: 'Strik Baldinelli Moniz LTD has updated their privacy policy. All 847 pages of it. You have 30 seconds to read it.', img: 'images/smb2.jpeg'},
+    {title: '🎁 Limited Time Offer', text: 'Get 50% off your next chair purchase at Shopify! (Chairs not actually sold on Shopify, terms and conditions apply, offer void everywhere)', img: 'images/shopify4.png'},
+    {title: '⚠️ System Alert', text: 'Your chair detection license will expire in 3 days. Renew now through our partners at Strik Baldinelli Moniz LTD!', img: 'images/sbm1.png'},
+    {title: '🌟 Did You Know?', text: 'Shopify processes billions in sales. None of it goes to you. But isn\'t it nice to know?', img: 'images/shopify1.jpg'},
+    {title: '📊 Analytics Report', text: 'You\'ve detected 0 chairs that matter. Strik Baldinelli Moniz LTD suggests you try harder.', img: 'images/strik.webp'},
+    {title: '👔 Meet Our Sponsors!', text: 'Aaron from Shopify wants you to know that this app could be an e-commerce store. Everything can be an e-commerce store.', img: 'images/aaron.webp'},
+    {title: '⚖️ Legal Consultation', text: 'Jahmad from Strik Baldinelli Moniz LTD advises: Every chair is a potential liability. Call now for a free 3-hour consultation!', img: 'images/jahmad.webp'},
+    {title: '🔥 HOT SINGLES IN YOUR AREA', text: 'Congratulations! Hot MILFs near you want to meet! They\'re lonely, bored, and only 0.3 miles away! Click now!!!', img: 'images/milf.jpeg'},
+    {title: '💋 Adult Friend Finder', text: 'Your husband is dead? I don\'t want to remarry, I only want to play ball! Real profiles, real MILFs, real questionable life choices.', img: 'images/milf.jpeg'},
+  ];
 
   // ==== Audio ====
   // List of default sounds in /audio
@@ -333,6 +458,80 @@
     toast('🎵 Custom sound armed', 'warn');
   });
 
+  /* ============ Cookie Banner & Popup Spam ============ */
+  function showCookieBanner(){
+    if (cookieBannerShown) return;
+    cookieBannerShown = true;
+    const banner = document.getElementById('cookieBanner');
+    const img = document.getElementById('cookieSponsorImg');
+    // Rotate sponsor image each time
+    img.src = sponsorImages[Math.floor(Math.random() * sponsorImages.length)];
+    banner.style.display = 'flex';
+  }
+  
+  function showSponsorPopup(){
+    const popup = sponsorPopups[Math.floor(Math.random() * sponsorPopups.length)];
+    const wrap = document.createElement('div');
+    wrap.className = 'popup';
+    wrap.innerHTML = `
+      <button class="close" onclick="this.parentElement.remove();document.getElementById('popupOverlay').classList.remove('show')">×</button>
+      <div class="popup-header">
+        <img src="${popup.img}" alt="sponsor">
+        <h2>${popup.title}</h2>
+      </div>
+      <p>${popup.text}</p>
+      <button class="primary" style="width:100%;margin-top:10px" onclick="this.parentElement.remove();document.getElementById('popupOverlay').classList.remove('show')">Claim Now (does nothing)</button>
+      <div class="popup-footer">Sponsored content • You can't skip this • Deal with it</div>
+    `;
+    document.body.appendChild(wrap);
+    document.getElementById('popupOverlay').classList.add('show');
+    
+    // Random chance to spawn another popup after this one closes (cascade spam)
+    if (Math.random() < 0.35) {
+      setTimeout(showSponsorPopup, 2500 + Math.random() * 4000);
+    }
+  }
+  
+  // Show cookie banner after 2 seconds
+  setTimeout(showCookieBanner, 2000);
+  
+  // Popup spam schedule (increasingly aggressive)
+  setTimeout(showSponsorPopup, 8000); // First popup after 8s
+  setInterval(() => {
+    if (Math.random() < 0.18 && !document.querySelector('.popup')) showSponsorPopup(); // 18% chance every interval
+  }, 10000);
+  
+  // Rotate sidebar ads every 8 seconds
+  const adConfigs = [
+    {img: 'images/sbm1.png', title: '⚖️ Legal Experts', text: 'Strik Baldinelli Moniz LTD: Your chairs need legal protection. Call now!', btn: 'Learn More'},
+    {img: 'images/shopify1.jpg', title: '🛍️ Power Commerce', text: 'Shopify: Sell chairs online. Or anything else. Probably chairs though.', btn: 'Start Selling'},
+    {img: 'images/aaron.webp', title: '💼 Meet Aaron', text: '"Every app should sell something" - Aaron, definitely', btn: 'Contact Expert'},
+    {img: 'images/milf.jpeg', title: '🔥 Hot MILFs Near You!', text: 'Single MILFs in your area want to meet NOW! Click here before they\'re gone! 😘💋', btn: 'Meet Local MILFs'},
+    {img: 'images/strik.webp', title: '⚖️ SBM Law Firm', text: 'Chair injury? Furniture liability? We\'ve got you covered. Probably.', btn: 'Free Consultation'},
+    {img: 'images/shopify2.jpg', title: '📦 Ship Chairs Fast', text: 'Shopify logistics: From detection to delivery in 2-3 business years.', btn: 'Ship Now'},
+    {img: 'images/jahmad.webp', title: '👨‍⚖️ Meet Jahmad', text: 'Expert in chair law. Yes, that\'s a thing now.', btn: 'Book Appointment'},
+    {img: 'images/milf.jpeg', title: '💕 Lonely Housewives', text: 'Bored housewives in your zip code are waiting! No credit card needed! (Definitely not a scam)', btn: 'Chat Now'},
+    {img: 'images/smb2.jpeg', title: '📋 Legal Services', text: 'SBM: Making chairs complicated since forever.', btn: 'Get Quote'},
+    {img: 'images/shopify3.jpg', title: '💰 Monetize Everything', text: 'Turn your chair detector into an empire. Thanks, Shopify!', btn: 'Go Premium'},
+    {img: 'images/shopify4.png', title: '🚀 Scale Your Chairs', text: 'From 1 chair to 1 million chairs. Shopify believes in you.', btn: 'Start Free Trial'},
+    {img: 'images/milf.jpeg', title: '😈 Adult Dating', text: 'Your husband is dead? These MILFs want to play ball! (and other sports)', btn: 'Click Here NOW'}
+  ];
+  
+  let adRotateIndex = 0;
+  function rotateAds(){
+    const ads = [document.getElementById('ad1'), document.getElementById('ad2'), document.getElementById('ad3')];
+    ads.forEach((ad, i) => {
+      if (!ad) return;
+      const config = adConfigs[(adRotateIndex + i) % adConfigs.length];
+      ad.querySelector('img').src = config.img;
+      ad.querySelector('h4').textContent = config.title;
+      ad.querySelector('p').textContent = config.text;
+      ad.querySelector('button').textContent = config.btn;
+    });
+    adRotateIndex = (adRotateIndex + 1) % adConfigs.length;
+  }
+  setInterval(rotateAds, 8000);
+  
   /* =============== Utils =============== */
   function toast(msg, tone='muted', t=1800){
     const d = document.createElement('div'); d.className = `toast ${tone}`; d.textContent = msg;
@@ -588,6 +787,40 @@
 
   // Seed with two pages for smoothness
   loadNext(); loadNext();
+  
+  /* ============ Cookie Banner Handlers (all choices are wrong) ============ */
+  document.getElementById('acceptAll')?.addEventListener('click', () => {
+    cookieAttempts++;
+    document.getElementById('cookieBanner').style.display = 'none';
+    toast('Cookies accepted. Our sponsors are watching you now. 👁️', 'warn');
+    showSponsorPopup(); // Reward with popup spam
+    // Banner comes back after 15 seconds because you can never truly accept
+    setTimeout(() => {
+      cookieBannerShown = false;
+      showCookieBanner();
+      toast('Cookie preferences expired. Please consent again.', 'err');
+    }, 15000);
+  });
+  
+  document.getElementById('rejectAll')?.addEventListener('click', () => {
+    cookieAttempts++;
+    toast('You cannot reject our sponsors. Try again.', 'err');
+    // Banner stays up, but image changes to shame you
+    const img = document.getElementById('cookieSponsorImg');
+    img.src = peopleImages[Math.floor(Math.random() * peopleImages.length)];
+    setTimeout(() => {
+      img.src = sponsorImages[Math.floor(Math.random() * sponsorImages.length)];
+    }, 2000);
+  });
+  
+  document.getElementById('customize')?.addEventListener('click', () => {
+    cookieAttempts++;
+    toast('Customization is an illusion. Everything is mandatory.', 'warn');
+    // Spawn 3 popups as punishment
+    showSponsorPopup();
+    setTimeout(showSponsorPopup, 800);
+    setTimeout(showSponsorPopup, 1600);
+  });
 })();
 </script>
 </body>
